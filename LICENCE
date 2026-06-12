@@ -1,0 +1,42 @@
+Copyright (c) 2026 Clumsy Wolf
+
+Ce projet est mis à disposition selon les termes de la licence
+Creative Commons Attribution-NonCommercial 4.0 International (CC BY-NC 4.0),
+sous réserve des conditions additionnelles définies ci-dessous.
+
+Résumé des droits principaux :
+
+Vous êtes autorisé à utiliser, copier, modifier et redistribuer ce code.
+Toute utilisation doit inclure une attribution claire à l’auteur.
+Toute utilisation commerciale est interdite sans autorisation écrite préalable.
+
+Texte complet de la licence CC BY-NC 4.0 :
+https://creativecommons.org/licenses/by-nc/4.0/
+
+Conditions additionnelles (prévalent en cas de conflit) :
+
+Interdiction d’usage pour l’intelligence artificielle
+
+Il est strictement interdit d’utiliser tout ou partie de ce code, ainsi que toute version modifiée ou dérivée, pour :
+
+entraîner des modèles d’intelligence artificielle ou de machine learning
+affiner (fine-tuning) des modèles existants
+constituer des jeux de données d’entraînement
+évaluer ou tester des modèles d’IA
+
+sans autorisation écrite préalable de l’auteur.
+
+Portée
+
+Cette interdiction s’applique à toute utilisation directe ou indirecte, y compris via des outils automatisés, pipelines de collecte de données ou systèmes tiers.
+
+Attribution
+
+Toute redistribution ou utilisation doit inclure :
+
+le nom de l’auteur
+un lien vers le dépôt d’origine
+une mention des modifications effectuées le cas échéant
+Absence de garantie
+
+Le logiciel est fourni “en l’état”, sans garantie d’aucune sorte, expresse ou implicite.
