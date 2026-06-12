@@ -1,0 +1,7 @@
+fastapi[standard]
+Unicorn
+pillow
+opencv-python
+pandas
+numpy
+sqlmodel
