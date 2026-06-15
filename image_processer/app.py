@@ -16,9 +16,23 @@ from input import (
     PREMIUM_USER,
     allowed_images_type
 )
-from db import get_file_record, add_file_record_with_token, touch_file_record
+from db import get_file_record, add_file_record_with_token, touch_file_record, delete_file_and_record
 from typing import Optional
 from .file_utils import safe_write_file
+
+
+def can_delete_file(rec: dict, request: Request, access_token: Optional[str] = None) -> bool:
+    """Check if user has permission to delete file."""
+    # anonymous files: only if access_token matches
+    if rec.get('is_anonymous'):
+        return access_token and rec.get('access_token') == access_token
+    # owned files: only if owner matches current user
+    owner_id = rec.get('owner_id')
+    user = getattr(request.state, 'user', None)
+    if owner_id is None:
+        # public file (shouldn't happen but allow owner)
+        return user is not None
+    return user and user.get('id') == owner_id
 from typing import Optional
 from .color_chart import ColorChart
 from .image_processor import ImageProcessor
@@ -203,6 +217,26 @@ async def get_color_chart_keys():
 async def get_chart_item_detail(key: str):
     item = COLORS_CHARTS[key]
     return item
+
+
+@image_process.delete("/delete_file/{filename}")
+async def delete_file(request: Request, filename: str, access_token: Optional[str] = None):
+    """Delete uploaded file (anonymous or owned)."""
+    rec = get_file_record(filename)
+    if not rec:
+        return Response(status_code=404, content="File not found")
+
+    # check permissions
+    if not can_delete_file(rec, request, access_token):
+        return Response(status_code=403, content="Permission denied")
+
+    # delete file and record
+    try:
+        delete_file_and_record(filename, images_path, image_out_path)
+    except Exception as e:
+        return Response(status_code=500, content=f"Error deleting file: {str(e)}")
+
+    return {"success": True, "message": f"File {filename} deleted", "filename": filename}
 
 
 @image_process.get("/get_chart/{key}")

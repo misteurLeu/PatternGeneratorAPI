@@ -1,23 +1,11 @@
-from fastapi import FastAPI, HTTPException
-from pydantic import BaseModel
-from typing import Optional
+from fastapi import FastAPI, HTTPException, Request
 import asyncio
 
 from image_processer.app import image_process
 from middlewares import AuthMiddleware, UploadLimitMiddleware
 import db
 from input import images_path, image_out_path
-
-
-class UserCreate(BaseModel):
-    username: str
-    password: str
-    role: Optional[str] = 'user'
-
-
-class UserLogin(BaseModel):
-    username: str
-    password: str
+from models import UserCreate, UserLogin
 
 
 app = FastAPI()

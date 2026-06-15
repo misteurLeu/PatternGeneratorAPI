@@ -1,7 +1,11 @@
 fastapi[standard]
-Unicorn
+uvicorn
 pillow
 opencv-python
 pandas
 numpy
 sqlmodel
+basic-colormath
+pytest
+pytest-asyncio
+httpx
