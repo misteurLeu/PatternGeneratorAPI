@@ -10,6 +10,7 @@ from input import (
     USER,
     PREMIUM_USER
 )
+from db import get_user_by_token
 
 
 class UploadLimitMiddleware(BaseHTTPMiddleware):
@@ -34,9 +35,19 @@ class UploadLimitMiddleware(BaseHTTPMiddleware):
 class AuthMiddleware(BaseHTTPMiddleware):
 
     async def dispatch(self, request: Request, call_next: RequestResponseEndpoint) -> Response:
-        if request.headers.get('authorisation'):
-            request.state.authorisations = USER
+        # Expect header: Authorization: Bearer <token>
+        auth = request.headers.get('authorization')
+        if auth and auth.lower().startswith('bearer '):
+            token = auth.split(' ', 1)[1].strip()
+            user = get_user_by_token(token)
+            if user:
+                request.state.user = user
+                request.state.authorisations = user.get('role')
+            else:
+                request.state.user = None
+                request.state.authorisations = ANONYMOUS_USER
         else:
+            request.state.user = None
             request.state.authorisations = ANONYMOUS_USER
 
         return await call_next(request)

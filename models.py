@@ -1,32 +1,28 @@
-from typing import Annotated
-
-from fastapi import Depends, FastAPI
-from fastapi.security import OAuth2PasswordBearer
 from pydantic import BaseModel
-
-app = FastAPI()
-
-oauth2_scheme = OAuth2PasswordBearer(tokenUrl='token')
+from typing import Optional
 
 
-class User(BaseModel):
+class UserCreate(BaseModel):
+    """Model for user registration."""
     username: str
-    email: str | None = None
-    disabled: bool | None = None
+    password: str
+    role: Optional[str] = 'user'
 
 
-def fake_decode_token(token):
-    return User(
-        Username=token+"fakedecoded",
-        email='john@example.com'
-    )
+class UserLogin(BaseModel):
+    """Model for user login."""
+    username: str
+    password: str
 
 
-async def get_current_user(token: Annotated[str, Depends(oauth2_scheme)]):
-    user = fake_decode_token(token)
-    return user
+class FileDeleteRequest(BaseModel):
+    """Model for file deletion request."""
+    filename: str
+    access_token: Optional[str] = None
 
 
-@app.get("/user/me")
-async def read_users_me(current_user: Annotated[User, Depends(get_current_user)]):
-    return current_user
+class FileResponse(BaseModel):
+    """Model for file operation response."""
+    success: bool
+    message: str
+    filename: Optional[str] = None
