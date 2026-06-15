@@ -3,7 +3,7 @@ from pathlib import Path
 from typing import Optional
 import hashlib
 import uuid
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import os
 import asyncio
 
@@ -115,9 +115,10 @@ def get_user_by_token(token: str) -> Optional[dict]:
 def add_file_record(filename: str, owner_id: Optional[int], is_anonymous: bool, expires_at: Optional[datetime]):
     conn = _get_conn()
     cur = conn.cursor()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     cur.execute(
         "INSERT OR REPLACE INTO files (filename, owner_id, is_anonymous, created_at, expires_at, access_token) VALUES (?, ?, ?, ?, ?, ?)",
-        (filename, owner_id, int(is_anonymous), datetime.utcnow(), expires_at, None),
+        (filename, owner_id, int(is_anonymous), now, expires_at, None),
     )
     conn.commit()
     conn.close()
@@ -126,9 +127,10 @@ def add_file_record(filename: str, owner_id: Optional[int], is_anonymous: bool, 
 def add_file_record_with_token(filename: str, owner_id: Optional[int], is_anonymous: bool, expires_at: Optional[datetime], access_token: Optional[str]):
     conn = _get_conn()
     cur = conn.cursor()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     cur.execute(
         "INSERT OR REPLACE INTO files (filename, owner_id, is_anonymous, created_at, expires_at, access_token) VALUES (?, ?, ?, ?, ?, ?)",
-        (filename, owner_id, int(is_anonymous), datetime.utcnow(), expires_at, access_token),
+        (filename, owner_id, int(is_anonymous), now, expires_at, access_token),
     )
     conn.commit()
     conn.close()
@@ -178,7 +180,7 @@ def touch_file_record(filename: str, extend_seconds: int):
         conn.close()
         return
     expires = row['expires_at']
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     if expires is None:
         new_expires = now + timedelta(seconds=extend_seconds)
     else:
@@ -205,7 +207,7 @@ def cleanup_expired_files(images_path: str, image_out_path: str):
     cur = conn.cursor()
     cur.execute("SELECT filename, expires_at FROM files WHERE is_anonymous=1 AND expires_at IS NOT NULL")
     rows = cur.fetchall()
-    now = datetime.utcnow()
+    now = datetime.now(timezone.utc).replace(tzinfo=None)
     for row in rows:
         expires = row['expires_at']
         if expires is None:

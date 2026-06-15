@@ -1,7 +1,7 @@
 from fastapi import FastAPI, UploadFile, BackgroundTasks, Request, Response
 from fastapi.responses import FileResponse
 from pathlib import Path
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 import uuid
 
 from input import (
@@ -17,6 +17,8 @@ from input import (
     allowed_images_type
 )
 from db import get_file_record, add_file_record_with_token, touch_file_record
+from typing import Optional
+from .file_utils import safe_write_file
 from typing import Optional
 from .color_chart import ColorChart
 from .image_processor import ImageProcessor
@@ -52,16 +54,7 @@ async def upload_image(request: Request, file: UploadFile, background_tasks: Bac
 
     # write atomically: write to a temp file then rename
     try:
-        import os
-        tmp = target / f".{filename}.{uuid.uuid4().hex}.tmp"
-        with open(tmp, "wb") as f:
-            f.write(content)
-        # ensure no symlink tricks: replace atomically
-        os.replace(tmp, dest)
-        try:
-            os.chmod(dest, 0o640)
-        except Exception:
-            pass
+        safe_write_file(dest, content)
     except Exception:
         # fallback to direct write
         with open(dest, "wb") as f:
@@ -94,7 +87,7 @@ async def upload_image(request: Request, file: UploadFile, background_tasks: Bac
     # anonymous user: generate an access token and an expiry
     owner_id = None
     is_anonymous = True
-    expires_at = datetime.utcnow() + timedelta(seconds=ANONYMOUS_TTL_SECONDS)
+    expires_at = datetime.now(timezone.utc).replace(tzinfo=None) + timedelta(seconds=ANONYMOUS_TTL_SECONDS)
     access_token = uuid.uuid4().hex
     try:
         add_file_record_with_token(filename, owner_id, is_anonymous, expires_at, access_token)
