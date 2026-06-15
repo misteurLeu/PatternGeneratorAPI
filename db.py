@@ -13,6 +13,11 @@ DB_PATH = Path('./Data/db.sqlite3')
 
 def _get_conn():
     DB_PATH.parent.mkdir(parents=True, exist_ok=True)
+    # ensure directory permissions
+    try:
+        os.chmod(DB_PATH.parent, 0o700)
+    except Exception:
+        pass
     conn = sqlite3.connect(str(DB_PATH), detect_types=sqlite3.PARSE_DECLTYPES | sqlite3.PARSE_COLNAMES)
     conn.row_factory = sqlite3.Row
     return conn

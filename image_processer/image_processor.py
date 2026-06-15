@@ -115,7 +115,17 @@ class ImageProcessor:
         converted = np.array([[colors[(int(color_in[0]), int(color_in[1]), int(color_in[2]))] for color_in in row] for row in self.image])
 
         new_im = Image.fromarray(converted.astype('uint8'), 'RGB')
-        new_im.save(Path(image_out_path) / self.image_out_name)
+        # ensure output directory exists
+        out_path = Path(image_out_path)
+        out_path.mkdir(parents=True, exist_ok=True)
+        target = out_path / self.image_out_name
+        new_im.save(target)
+        # set restrictive permissions on output file
+        try:
+            import os
+            os.chmod(target, 0o640)
+        except Exception:
+            pass
 
     def get_nearest_color(self, color):
         return np.array(self.get_nearest_color_chached(tuple(color)), dtype=np.uint8)

@@ -16,7 +16,8 @@ from input import (
     PREMIUM_USER,
     allowed_images_type
 )
-from db import add_file_record, get_file_record, add_file_record_with_token, touch_file_record
+from db import get_file_record, add_file_record_with_token, touch_file_record
+from typing import Optional
 from .color_chart import ColorChart
 from .image_processor import ImageProcessor
 
@@ -33,19 +34,43 @@ async def upload_image(request: Request, file: UploadFile, background_tasks: Bac
         return Response(status_code=415, content=f"Unsupported media type: {file.content_type}")
 
     content = await file.read()
-    # ensure unique filename
+    # ensure unique filename and sanitize input filename
     target = Path(images_path)
     target.mkdir(parents=True, exist_ok=True)
-    filename = file.filename
+    # avoid path traversal by taking only the name
+    original_name = Path(file.filename).name
+    stem = Path(original_name).stem
+    suffix = Path(original_name).suffix
+    filename = original_name
     dest = target / filename
     i = 1
+    # avoid overwriting existing files
     while dest.exists():
-        filename = f"{Path(file.filename).stem}_{i}{Path(file.filename).suffix}"
+        filename = f"{stem}_{i}{suffix}"
         dest = target / filename
         i += 1
 
-    with open(dest, "wb") as f:
-        f.write(content)
+    # write atomically: write to a temp file then rename
+    try:
+        import os
+        tmp = target / f".{filename}.{uuid.uuid4().hex}.tmp"
+        with open(tmp, "wb") as f:
+            f.write(content)
+        # ensure no symlink tricks: replace atomically
+        os.replace(tmp, dest)
+        try:
+            os.chmod(dest, 0o640)
+        except Exception:
+            pass
+    except Exception:
+        # fallback to direct write
+        with open(dest, "wb") as f:
+            f.write(content)
+        try:
+            import os
+            os.chmod(dest, 0o640)
+        except Exception:
+            pass
 
     # record file in DB
     user = getattr(request.state, 'user', None)
@@ -128,7 +153,7 @@ async def replace_color(
 
 
 @image_process.get("/get_out_image/{filename}")
-async def get_out_image(request: Request, filename: str, access_token: str | None = None):
+async def get_out_image(request: Request, filename: str, access_token: Optional[str] = None):
     # Check DB to ensure access control
     rec = get_file_record(filename)
     if not rec:
