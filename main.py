@@ -1,4 +1,5 @@
 from fastapi import FastAPI, HTTPException, Request
+from fastapi.middleware.cors import CORSMiddleware
 import asyncio
 
 from image_processer.app import image_process
@@ -9,6 +10,20 @@ from models import UserCreate, UserLogin
 
 
 app = FastAPI()
+
+# Configure CORS to allow frontend requests
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://localhost:5173",    # Local development (Vite default)
+        "http://localhost:3000",    # Alternative frontend port
+        "http://localhost:5173/",   # With trailing slash
+    ],
+    allow_credentials=True,
+    allow_methods=["*"],            # Allow all HTTP methods
+    allow_headers=["*"],            # Allow all headers
+)
+
 app.mount("/image_process", image_process)
 app.add_middleware(AuthMiddleware)
 app.add_middleware(UploadLimitMiddleware)
